@@ -1,0 +1,11 @@
+.idea
+.env
+_envoy.yaml
+envoy.yaml_2
+frontend/
+main
+main.go
+cover.out
+/grpc
+.volumes/
+runtime

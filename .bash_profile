@@ -1,0 +1,3 @@
+export GOROOT=/usr/local/go
+export GOPATH=/Users/riordorian/Documents/go
+export PATH=/Users/riordorian/go/bin:/Users/riordorian/sdk/go1.21.3/bin:/Users/riordorian/sdk/go1.21.3/bin:/Users/riordorian/go/bin:/Applications/MAMP/bin/php/php7.1.1/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/usr/local/MacGPG2/bin:/Applications/VMware Fusion.app/Contents/Public:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/usr/local/mysql/bin

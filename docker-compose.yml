@@ -1,0 +1,111 @@
+version: '3.9'
+
+services:
+#  alpine:
+#    build:
+#      context: .
+#      dockerfile: ".docker/telnet/Dockerfile"
+#    tty: true
+  grpc:
+    container_name: "grpc"
+    build:
+      context: .
+      dockerfile: ".docker/grpc/Dockerfile"
+    ports:
+      - "50051:50051"
+    volumes:
+      - .:/app
+  db:
+    image: postgres:latest
+    restart: always
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - .volumes/db:/var/lib/postgresql/data
+  minio:
+    image: quay.io/minio/minio
+    command: server /data --console-address ":9090"
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9090:9090"
+    volumes:
+      - .volumes/minio/data:/data
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=Secure123$
+  envoy:
+    build:
+      context: .
+      dockerfile: ".docker/envoy/Dockerfile"
+    ports:
+      - "8000:8000"
+      - "9901:9901"
+    volumes:
+        - ./envoy.yaml:/etc/envoy/envoy.yaml
+  keycloak:
+    image: quay.io/keycloak/keycloak
+    container_name: keycloak
+    command:
+      - start-dev
+      - --import-realm
+    env_file: .env
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_ADMIN=grpc
+      - KEYCLOAK_ADMIN_PASSWORD=grpc
+    ports:
+      - "8082:8080"
+    volumes:
+      - .volumes/keycloak/:/opt/keycloak/data/
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:8.13.4
+    # 8.x
+    environment: [ 'CLI_JAVA_OPTS=-Xms2g -Xmx2g','bootstrap.memory_lock=true','discovery.type=single-node','xpack.security.enabled=false', 'xpack.security.enrollment.enabled=false' ]
+    ports:
+      - "9200:9200"
+    networks:
+      - elastic
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+        reservations:
+          cpus: '1.0'
+    volumes:
+      - .volumes/elasticsearch:/usr/share/elasticsearch/data
+
+  kibana:
+    image: kibana:8.13.4
+    container_name: kibana
+    environment:
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: "d1a66dfd-c4d3-4a0a-8290-2abcb83ab3aa"
+    ports:
+      - "5601:5601"
+    networks:
+      - elastic
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+        reservations:
+          cpus: '1.0'
+#  krakend:
+#    image: devopsfaith/krakend:watch
+#    volumes:
+#      - ".docker/krakend/:/etc/krakend"
+#    ports:
+#      - "8080:8080"
+#    command: [ "run", "-dc", "krakend.json" ]
+
+networks:
+  elastic:
