@@ -18,6 +18,7 @@ func InitConfig() interfaces.ConfigProviderInterface {
 
 	viper.SetDefault("BASE_PATH", "/mnt/nfs/")
 	viper.SetDefault("METRIC_COLLECT_INTERVAL_SECONDS", "60")
+	viper.SetDefault("EXPOSE_PORT", "8085")
 	viper.SetDefault("RESTIC_PASSWORD_COMMAND", "pass")
 
 	return viper

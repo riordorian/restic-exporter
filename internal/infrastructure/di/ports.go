@@ -1,22 +1,29 @@
 package di
 
 import (
-	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/sarulabs/di"
 	"github.com/spf13/viper"
 	"grpc/internal/infrastructure/ports"
+	"grpc/internal/infrastructure/ports/http"
 )
 
 var PortsServices = []di.Def{
 	{
-		Name:  "GrpcServer",
+		Name:  "Router",
+		Scope: di.App,
+		Build: func(ctn di.Container) (interface{}, error) {
+			return mux.NewRouter(), nil
+		},
+	},
+	{
+		Name:  "HttpServer",
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
 			config := ctn.Get("ConfigProvider").(*viper.Viper)
-			address := fmt.Sprintf("%s:%s", config.GetString("GRPC_SERVER_HOST"), config.GetString("GRPC_SERVER_PORT"))
-			fmt.Println(address)
+			router := ctn.Get("Router").(*mux.Router)
 
-			return nil, nil
+			return http.GetServer(config.GetInt("EXPOSE_PORT"), router), nil
 		},
 	},
 	{
@@ -24,8 +31,7 @@ var PortsServices = []di.Def{
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
 			return ports.Services{
-				//GrpcServer: ctn.Get("GrpcServer").(*grpc.NewsServer),
-				//HttpServer: http.GetServer(appServices.Handler),
+				HttpServer: ctn.Get("httpServer").(*http.Server),
 			}, nil
 		},
 	},
