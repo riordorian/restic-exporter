@@ -3,12 +3,12 @@ package queries
 import (
 	"context"
 	"errors"
-	"grpc/internal/application/storage"
-	"grpc/internal/domain/news"
-	"grpc/internal/domain/repository"
-	"grpc/internal/shared/dto"
-	"grpc/pkg/mocks"
 	"reflect"
+	"restic-exporter/internal/application/storage"
+	"restic-exporter/internal/domain/news"
+	"restic-exporter/internal/domain/repository"
+	"restic-exporter/internal/shared/dto"
+	"restic-exporter/pkg/mocks"
 	"testing"
 )
 

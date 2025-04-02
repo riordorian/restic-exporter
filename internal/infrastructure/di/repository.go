@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/sarulabs/di"
 	"github.com/spf13/viper"
-	"grpc/internal/infrastructure/adapters/storage/postgres"
-	"grpc/internal/infrastructure/db"
 	"log"
+	"restic-exporter/internal/infrastructure/adapters/storage/postgres"
+	"restic-exporter/internal/infrastructure/db"
 )
 
 var RepositoryServices = []di.Def{

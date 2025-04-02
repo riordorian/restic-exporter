@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"grpc/internal/infrastructure/ports/http"
+	"restic-exporter/internal/infrastructure/ports/http"
 )
 
 type Services struct {

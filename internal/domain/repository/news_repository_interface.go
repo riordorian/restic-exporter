@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"github.com/google/uuid"
-	"grpc/internal/domain/news"
-	"grpc/internal/shared/dto"
+	"restic-exporter/internal/domain/news"
+	"restic-exporter/internal/shared/dto"
 )
 
 type NewsRepositoryInterface interface {

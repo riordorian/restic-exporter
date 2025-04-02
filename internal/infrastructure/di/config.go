@@ -2,7 +2,7 @@ package di
 
 import (
 	"github.com/sarulabs/di"
-	"grpc/config"
+	"restic-exporter/config"
 )
 
 var ConfigServices = []di.Def{

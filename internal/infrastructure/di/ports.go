@@ -4,8 +4,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sarulabs/di"
 	"github.com/spf13/viper"
-	"grpc/internal/infrastructure/ports"
-	"grpc/internal/infrastructure/ports/http"
+	"restic-exporter/internal/infrastructure/ports"
+	"restic-exporter/internal/infrastructure/ports/http"
 )
 
 var PortsServices = []di.Def{
@@ -31,7 +31,7 @@ var PortsServices = []di.Def{
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
 			return ports.Services{
-				HttpServer: ctn.Get("httpServer").(*http.Server),
+				HttpServer: ctn.Get("HttpServer").(*http.Server),
 			}, nil
 		},
 	},

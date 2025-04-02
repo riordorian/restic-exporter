@@ -2,8 +2,7 @@ package news
 
 import (
 	"github.com/google/uuid"
-	"grpc/internal/domain/tags"
-	"grpc/internal/shared"
+	"restic-exporter/internal/shared"
 	"time"
 )
 
@@ -24,5 +23,4 @@ type News struct {
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 	AcceptedBy  uuid.UUID `json:"accepted_by" db:"accepted_by"`
 	CreatedBy   uuid.UUID `json:"created_by" db:"created_by"`
-	Tags        []tags.Tag
 }

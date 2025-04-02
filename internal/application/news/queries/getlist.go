@@ -2,10 +2,10 @@ package queries
 
 import (
 	"context"
-	"grpc/internal/application/storage"
-	"grpc/internal/domain/news"
-	"grpc/internal/domain/repository"
-	"grpc/internal/shared/dto"
+	"restic-exporter/internal/application/storage"
+	"restic-exporter/internal/domain/news"
+	"restic-exporter/internal/domain/repository"
+	"restic-exporter/internal/shared/dto"
 )
 
 type ListHandler struct {

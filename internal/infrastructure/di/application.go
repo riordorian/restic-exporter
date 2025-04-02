@@ -2,29 +2,28 @@ package di
 
 import (
 	"github.com/sarulabs/di"
-	"grpc/internal/application"
-	appnewscommands "grpc/internal/application/news/commands"
-	appnews "grpc/internal/application/news/queries"
-	"grpc/internal/domain/repository"
-	"grpc/internal/infrastructure/db"
+	"restic-exporter/internal/application"
+	"restic-exporter/internal/application/cqrs"
 )
 
 var ApplicationServices = []di.Def{
 	{
-		Name:  "ApplicationHandlers",
+		Name:  "ApplicationServices",
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
-			transactor := ctn.Get("Database").(*db.Db)
-			newsRepository := ctn.Get("NewsRepository").(repository.NewsRepositoryInterface)
-
-			return application.Handlers{
-				Queries: application.Queries{
-					GetList: appnews.NewGetListHandler(newsRepository, transactor),
-				},
-				Commands: application.Commands{
-					Create: appnewscommands.NewCreateHandler(newsRepository, transactor),
-				},
+			//fs := ctn.Get("FilesystemStorage").(storage.FilesystemInterface)
+			dispatcher := ctn.Get("Dispatcher").(cqrs.DispatcherInterface)
+			return application.Services{
+				Dispatcher: dispatcher,
 			}, nil
+		},
+	},
+	{
+		Name:  "Dispatcher",
+		Scope: di.App,
+		Build: func(ctn di.Container) (interface{}, error) {
+
+			return cqrs.NewDispatcher(), nil
 		},
 	},
 }

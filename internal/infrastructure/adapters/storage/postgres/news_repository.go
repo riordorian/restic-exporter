@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/stdlib"
-	"grpc/internal/domain/news"
-	"grpc/internal/infrastructure/db"
-	"grpc/internal/shared/dto"
+	"restic-exporter/internal/domain/news"
+	"restic-exporter/internal/infrastructure/db"
+	"restic-exporter/internal/shared/dto"
 	"strings"
 )
 

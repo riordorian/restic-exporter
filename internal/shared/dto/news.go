@@ -2,7 +2,6 @@ package dto
 
 import (
 	"github.com/google/uuid"
-	"grpc/pkg/proto_gen/grpc"
 )
 
 type ListRequest struct {
@@ -17,5 +16,4 @@ type CreateRequest struct {
 	Text  string
 	Title string
 	Tags  []string
-	Media []*grpc.MediaUploadRequest
 }
