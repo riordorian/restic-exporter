@@ -4,11 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	proadapt "restic-exporter/internal/infrastructure/adapters/prometheus"
 	"time"
 )
 
@@ -35,7 +37,18 @@ func (s *Server) Serve() {
 	flag.Parse()
 
 	//s.router.HandleFunc("/metrics", s.metricsHandler)
-	s.router.Handle("/metrics", promhttp.Handler())
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(
+		proadapt.NewResticCollector(),
+	)
+
+	s.router.Handle("/metrics", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Debug: Metrics endpoint called")
+		promhttp.HandlerFor(reg, promhttp.HandlerOpts{
+			Registry: reg,
+		}).ServeHTTP(w, r)
+	}))
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf("0.0.0.0:%d", s.listenPort),
@@ -76,8 +89,13 @@ func (s *Server) Serve() {
 }
 
 func (s *Server) metricsHandler(w http.ResponseWriter, r *http.Request) {
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(
+		proadapt.NewResticCollector(),
+	)
+
+	promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg})
 	fmt.Println(r)
-	fmt.Fprintf(w, "Hello, Go!")
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {

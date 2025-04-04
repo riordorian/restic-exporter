@@ -5,6 +5,30 @@ import (
 	"sync"
 )
 
+var baseMetrics = map[string]*prometheus.GaugeVec{
+	"restic_repo_snapshot_avg_size_bytes": prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "restic_repo_snapshot_avg_size_bytes",
+			Help: "Avg size of the restic repository snapshots in bytes",
+		},
+		[]string{"repo"},
+	),
+	"restic_snapshots_count": prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "restic_snapshots_count",
+			Help: "Number of snapshots in the repository",
+		},
+		[]string{"repo"},
+	),
+	"restic_last_backup_timestamp": prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "restic_last_backup_timestamp",
+			Help: "Timestamp of the last backup in the repository",
+		},
+		[]string{"repo"},
+	),
+}
+
 // MetricType объединяет поддерживаемые типы метрик Prometheus
 type MetricType interface {
 	*prometheus.Gauge | *prometheus.Counter | *prometheus.Histogram | *prometheus.Summary

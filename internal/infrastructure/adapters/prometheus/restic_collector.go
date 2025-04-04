@@ -13,30 +13,6 @@ import (
 	"time"
 )
 
-var BaseMetrics = map[string]*prometheus.GaugeVec{
-	"restic_repo_size_bytes": prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "restic_repo_size_bytes",
-			Help: "Total size of the restic repository in bytes",
-		},
-		[]string{"repo"},
-	),
-	"restic_snapshots_count": prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "restic_snapshots_count",
-			Help: "Number of snapshots in the repository",
-		},
-		[]string{"repo"},
-	),
-	"restic_last_backup_timestamp": prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "restic_last_backup_timestamp",
-			Help: "Timestamp of the last backup in the repository",
-		},
-		[]string{"repo"},
-	),
-}
-
 var (
 	collectorInstance *ResticCollector
 	once              sync.Once
@@ -113,15 +89,18 @@ func (c *ResticCollector) InitRepos(
 func (c *ResticCollector) Describe(ch chan<- *prometheus.Desc) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	for _, metric := range baseMetrics {
+		metric.Describe(ch)
+	}
 
-	for _, repoMetrics := range c.metrics {
+	/*for _, repoMetrics := range c.metrics {
 		for _, metric := range repoMetrics.Vector.metrics {
 			metric.Describe(ch)
 		}
 		for _, metric := range repoMetrics.CounterVec.metrics {
 			metric.Describe(ch)
 		}
-	}
+	}*/
 }
 
 func (c *ResticCollector) Collect(ch chan<- prometheus.Metric) {
@@ -159,24 +138,64 @@ func (c *ResticCollector) CollectMetrics(
 				RootDir: rootDir,
 			})
 
+			if err != nil {
+				log.SetOutput(os.Stderr)
+				log.Println(err.Error())
+				return
+			}
+
 			if repos, ok := repos.(restic.ReposMap); ok {
 				c.InitRepos(repos)
+
+				for path, repo := range repos {
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						err := c.CollectRepoSnapshotsInfo(ctx, dispatcher, repo)
+						if err != nil {
+							log.SetOutput(os.Stderr)
+							log.Println(err.Error())
+						}
+					}()
+					fmt.Println(path, repo)
+				}
 			} else {
 				log.SetOutput(os.Stderr)
 				log.Fatal("Invalid type of repos struct. Expected restic.ReposMap")
+				return
 			}
 
 			// TODO: 1. Collect repos snapshots information in another goroutines
 			// TODO: 2. Initialize ResticCollector repos by InitRepos() method
 			// TODO: 3. Each goroutine should run CollectSnapshots query handler
 			// TODO: 4. After that, must update ResticCollector metrics data by  gauge.Set(float64(snapshotCount))...
-
-			if err != nil {
-				log.SetOutput(os.Stderr)
-				log.Fatal(err.Error())
-			}
 		}
 	}
+}
+
+func (c *ResticCollector) CollectRepoSnapshotsInfo(
+	ctx context.Context,
+	dispatcher cqrs.DispatcherInterface,
+	repo restic.Repo,
+) error {
+	fmt.Println(dispatcher)
+	snapshot, err := dispatcher.DispatchQuery(ctx, queries.GetSnapshotsQuery{Repo: repo})
+	if err != nil {
+		return err
+	}
+
+	if _, ok := snapshot.(restic.Snapshot); !ok {
+		return fmt.Errorf("invalid type of snapshot struct. Expected restic.Snapshot struct")
+	}
+
+	snapshotInfo := snapshot.(restic.Snapshot)
+
+	c.metrics[repo.Path].Vector.metrics["restic_repo_snapshot_avg_size_bytes"] = baseMetrics["restic_repo_snapshot_avg_size_bytes"]
+	c.metrics[repo.Path].Vector.metrics["restic_repo_snapshot_avg_size_bytes"].
+		WithLabelValues(repo.Path).
+		Set(float64(snapshotInfo.Size))
+
+	return nil
 }
 
 func (c *ResticCollector) GetGauges(repoPath string) *MetricsContainer[*prometheus.GaugeVec] {
