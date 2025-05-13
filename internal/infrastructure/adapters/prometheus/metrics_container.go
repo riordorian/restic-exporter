@@ -9,23 +9,37 @@ var baseMetrics = map[string]*prometheus.GaugeVec{
 	"restic_repo_snapshot_avg_size_bytes": prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "restic_repo_snapshot_avg_size_bytes",
-			Help: "Avg size of the restic repository snapshots in bytes",
+			Help: "Size of the restic repository latest snapshot in bytes",
 		},
-		[]string{"repo"},
+		[]string{"repo_path", "snapshot_id"},
+	),
+	"restic_latest_snapshot_files_count": prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "restic_latest_snapshot_files_count",
+			Help: "Number of files in the restic repository latest snapshot",
+		},
+		[]string{"repo_path", "snapshot_id"},
 	),
 	"restic_snapshots_count": prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "restic_snapshots_count",
 			Help: "Number of snapshots in the repository",
 		},
-		[]string{"repo"},
+		[]string{"repo_path"},
+	),
+	"restic_repo_total_size": prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "restic_repo_total_size",
+			Help: "Total repository size in bytes",
+		},
+		[]string{"repo_path"},
 	),
 	"restic_last_backup_timestamp": prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "restic_last_backup_timestamp",
 			Help: "Timestamp of the last backup in the repository",
 		},
-		[]string{"repo"},
+		[]string{"repo_path", "latest"},
 	),
 }
 

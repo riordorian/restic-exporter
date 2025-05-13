@@ -61,7 +61,7 @@ func (s *Server) Serve() {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
-			log.Println(err)
+			log.Println(err.Error())
 		}
 	}()
 

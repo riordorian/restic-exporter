@@ -178,8 +178,7 @@ func (c *ResticCollector) CollectRepoSnapshotsInfo(
 	dispatcher cqrs.DispatcherInterface,
 	repo restic.Repo,
 ) error {
-	fmt.Println(dispatcher)
-	snapshot, err := dispatcher.DispatchQuery(ctx, queries.GetSnapshotsQuery{Repo: repo})
+	snapshot, err := dispatcher.DispatchQuery(ctx, queries.GetSnapshotQuery{Repo: repo})
 	if err != nil {
 		return err
 	}
@@ -192,8 +191,34 @@ func (c *ResticCollector) CollectRepoSnapshotsInfo(
 
 	c.metrics[repo.Path].Vector.metrics["restic_repo_snapshot_avg_size_bytes"] = baseMetrics["restic_repo_snapshot_avg_size_bytes"]
 	c.metrics[repo.Path].Vector.metrics["restic_repo_snapshot_avg_size_bytes"].
-		WithLabelValues(repo.Path).
+		WithLabelValues(repo.Path, "latest").
 		Set(float64(snapshotInfo.Size))
+
+	c.metrics[repo.Path].Vector.metrics["restic_latest_snapshot_files_count"] = baseMetrics["restic_latest_snapshot_files_count"]
+	c.metrics[repo.Path].Vector.metrics["restic_latest_snapshot_files_count"].
+		WithLabelValues(repo.Path, "latest").
+		Set(float64(snapshotInfo.FilesCount))
+
+	repoStatistic, err := dispatcher.DispatchQuery(ctx, queries.GetRepoStatisticQuery{Repo: repo})
+
+	if err != nil {
+		return err
+	}
+
+	if _, ok := repoStatistic.(restic.Repo); !ok {
+		return fmt.Errorf("invalid type of repo statistic struct. Expected restic.Repo struct")
+	}
+	repoStat := repoStatistic.(restic.Repo)
+
+	c.metrics[repo.Path].Vector.metrics["restic_snapshots_count"] = baseMetrics["restic_snapshots_count"]
+	c.metrics[repo.Path].Vector.metrics["restic_snapshots_count"].
+		WithLabelValues(repo.Path).
+		Set(float64(repoStat.SnapshotsCount))
+
+	c.metrics[repo.Path].Vector.metrics["restic_repo_total_size"] = baseMetrics["restic_repo_total_size"]
+	c.metrics[repo.Path].Vector.metrics["restic_repo_total_size"].
+		WithLabelValues(repo.Path).
+		Set(float64(repoStat.TotalSize))
 
 	return nil
 }

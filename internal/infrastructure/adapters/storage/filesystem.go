@@ -28,6 +28,7 @@ func (f *Filesystem) FindAllRepos(ctx context.Context, rootDir string) (restic.R
 
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+
 			return err
 		}
 		if info.IsDir() && f.isResticRepo(path) {
@@ -126,6 +127,7 @@ func (f *Filesystem) GetLatestSnapshotInfo(repo restic.Repo) (restic.Snapshot, e
 		}
 
 		snapshot.Timestamp = snapshotTimestamp
+		snapshot.Id = snapshotInfo["short_id"].(string)
 	} else {
 		return snapshot, err
 	}
@@ -157,6 +159,37 @@ func (f *Filesystem) GetLatestSnapshotInfo(repo restic.Repo) (restic.Snapshot, e
 	}
 
 	return snapshot, nil
+}
+
+func (f *Filesystem) GetRepoStatistic(repo restic.Repo) (restic.Repo, error) {
+	cmd := exec.Command("restic", "-r", repo.Path, "stats", "--json", "--no-lock")
+	// TODO: need dynamic password
+	cmd.Env = append(os.Environ(), "RESTIC_PASSWORD=1")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return restic.Repo{}, fmt.Errorf("restic failed: %v\nOutput: %s", err, string(output))
+	}
+
+	stat, err := f.jsonUnmarshal(string(output))
+	if err != nil {
+		return repo, err
+	}
+
+	keys := []string{"total_size", "snapshots_count"}
+	exists := true
+	for _, key := range keys {
+		if _, found := stat[key]; !found {
+			exists = false
+			break
+		}
+	}
+
+	if exists {
+		repo.SnapshotsCount = int(stat["snapshots_count"].(float64))
+		repo.TotalSize = int(stat["total_size"].(float64))
+	}
+
+	return repo, nil
 }
 
 func (f *Filesystem) jsonUnmarshal(data string) (map[string]interface{}, error) {

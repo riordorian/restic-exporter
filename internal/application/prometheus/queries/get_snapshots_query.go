@@ -2,10 +2,10 @@ package queries
 
 import "restic-exporter/internal/domain/restic"
 
-type GetSnapshotsQuery struct {
+type GetSnapshotQuery struct {
 	Repo restic.Repo
 }
 
-func (c GetSnapshotsQuery) QueryName() string {
+func (c GetSnapshotQuery) QueryName() string {
 	return "GetSnapshots"
 }
