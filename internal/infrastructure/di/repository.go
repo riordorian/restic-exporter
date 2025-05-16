@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/sarulabs/di"
 	"github.com/spf13/viper"
-	"log"
+	logger "restic-exporter/internal/application/log"
 	"restic-exporter/internal/infrastructure/adapters/storage/postgres"
 	"restic-exporter/internal/infrastructure/db"
 )
@@ -16,8 +16,9 @@ var RepositoryServices = []di.Def{
 		Build: func(c di.Container) (interface{}, error) {
 			config := c.Get("ConfigProvider").(*viper.Viper)
 			ctx, err := db.GetContextDb(context.Background(), config.Get("POSTGRES_DSN").(string))
+			logger := c.Get("LoggerService").(logger.LoggerInterface)
 			if err != nil {
-				log.Fatal(err.Error())
+				logger.Error(err.Error())
 			}
 
 			db, err := db.GetDb(ctx)

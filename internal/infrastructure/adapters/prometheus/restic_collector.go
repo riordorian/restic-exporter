@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"log"
-	"os"
 	"restic-exporter/internal/application/cqrs"
+	logger "restic-exporter/internal/application/log"
 	"restic-exporter/internal/application/prometheus/queries"
 	"restic-exporter/internal/domain/restic"
 	"sync"
@@ -29,15 +28,19 @@ type ResticCollector struct {
 	vecContainerFactory     *MetricsContainerFactory[*prometheus.GaugeVec]
 	counterContainerFactory *MetricsContainerFactory[*prometheus.CounterVec]
 	//metrics map[string]RepoMetrics
-	mu sync.Mutex
+	mu                 sync.Mutex
+	log                logger.LoggerInterface
+	collectingInterval time.Duration
 }
 
-func NewResticCollector() *ResticCollector {
+func NewResticCollector(log logger.LoggerInterface, collectingInterval time.Duration) *ResticCollector {
 	once.Do(func() {
 		collectorInstance = &ResticCollector{
 			metrics:                 make(map[string]*RepoMetrics, 100), //TODO: need dynamic size
 			vecContainerFactory:     &MetricsContainerFactory[*prometheus.GaugeVec]{},
 			counterContainerFactory: &MetricsContainerFactory[*prometheus.CounterVec]{},
+			log:                     log,
+			collectingInterval:      collectingInterval,
 		}
 	})
 	return collectorInstance
@@ -124,14 +127,13 @@ func (c *ResticCollector) CollectMetrics(
 	dispatcher cqrs.DispatcherInterface,
 ) {
 	defer wg.Done()
-	ticker := time.NewTicker(5 * time.Second) //TODO: need dynamic interval
+	ticker := time.NewTicker(c.collectingInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.SetOutput(os.Stdout)
-			log.Println("Metrics collection stopped")
+			c.log.Info("Restic collection stopped")
 			return
 		case <-ticker.C:
 			repos, err := dispatcher.DispatchQuery(ctx, queries.CollectReposQuery{
@@ -139,8 +141,7 @@ func (c *ResticCollector) CollectMetrics(
 			})
 
 			if err != nil {
-				log.SetOutput(os.Stderr)
-				log.Println(err.Error())
+				c.log.Error(err.Error())
 				return
 			}
 
@@ -153,22 +154,15 @@ func (c *ResticCollector) CollectMetrics(
 						defer wg.Done()
 						err := c.CollectRepoSnapshotsInfo(ctx, dispatcher, repo)
 						if err != nil {
-							log.SetOutput(os.Stderr)
-							log.Println(err.Error())
+							c.log.Error(err.Error())
 						}
 					}()
-					fmt.Println(path, repo)
+					c.log.Info("Restic repo collect info: ", "path", path)
 				}
 			} else {
-				log.SetOutput(os.Stderr)
-				log.Fatal("Invalid type of repos struct. Expected restic.ReposMap")
+				c.log.Error("Invalid type of repos struct. Expected restic.ReposMap")
 				return
 			}
-
-			// TODO: 1. Collect repos snapshots information in another goroutines
-			// TODO: 2. Initialize ResticCollector repos by InitRepos() method
-			// TODO: 3. Each goroutine should run CollectSnapshots query handler
-			// TODO: 4. After that, must update ResticCollector metrics data by  gauge.Set(float64(snapshotCount))...
 		}
 	}
 }

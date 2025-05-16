@@ -4,6 +4,8 @@ import (
 	"github.com/sarulabs/di"
 	"restic-exporter/internal/application"
 	"restic-exporter/internal/application/cqrs"
+	"restic-exporter/internal/application/prometheus/queries"
+	"restic-exporter/internal/application/storage"
 )
 
 var ApplicationServices = []di.Def{
@@ -22,8 +24,26 @@ var ApplicationServices = []di.Def{
 		Name:  "Dispatcher",
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
+			fs := ctn.Get("FilesystemStorage").(storage.FilesystemInterface)
 
-			return cqrs.NewDispatcher(), nil
+			dispatcher := cqrs.NewDispatcher()
+
+			collectReposHandler := queries.CollectReposQueryHandler{
+				FileStorage: fs,
+			}
+			dispatcher.RegisterQuery("CollectRepos", collectReposHandler)
+
+			getSnapshotsHandler := queries.GetSnapshotsQueryHandler{
+				FileStorage: fs,
+			}
+			dispatcher.RegisterQuery("GetSnapshots", getSnapshotsHandler)
+
+			getRepoStatisticHandler := queries.GetRepoStatisticQueryHandler{
+				FileStorage: fs,
+			}
+			dispatcher.RegisterQuery("GetRepoStatistic", getRepoStatisticHandler)
+
+			return dispatcher, nil
 		},
 	},
 }

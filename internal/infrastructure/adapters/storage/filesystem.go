@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	logger "restic-exporter/internal/application/log"
 	"restic-exporter/internal/domain/restic"
 	"strings"
 	"time"
@@ -15,6 +15,11 @@ import (
 
 type Filesystem struct {
 	Repos restic.ReposMap
+	log   logger.LoggerInterface
+}
+
+func (f *Filesystem) SetLogger(log logger.LoggerInterface) {
+	f.log = log
 }
 
 func (f *Filesystem) FindAllRepos(ctx context.Context, rootDir string) (restic.ReposMap, error) {
@@ -76,16 +81,14 @@ func (f *Filesystem) isResticRepo(path string) bool {
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		log.SetOutput(os.Stderr)
-		log.Fatal(err.Error())
+		f.log.Error(err.Error())
 	}
 
 	var snapshot map[string]interface{}
 
 	err = json.Unmarshal([]byte(output), &snapshot)
 	if err != nil {
-		log.SetOutput(os.Stderr)
-		log.Println("JSON decode error:", err)
+		f.log.Error("JSON decode error:", err)
 		return false
 	}
 

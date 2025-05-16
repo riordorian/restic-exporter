@@ -95,7 +95,6 @@ func (d *Dispatcher) DispatchCommand(ctx context.Context, cmd CommandInterface) 
 func (d *Dispatcher) DispatchQuery(ctx context.Context, query QueryInterface) (interface{}, error) {
 	handler, ok := d.qryHandlers[query.QueryName()]
 
-	fmt.Println(query.QueryName())
 	if !ok {
 		return nil, fmt.Errorf("query handler not found: %s", query.QueryName())
 	}

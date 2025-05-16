@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	logger "restic-exporter/internal/application/log"
 	proadapt "restic-exporter/internal/infrastructure/adapters/prometheus"
 	"time"
 )
@@ -19,15 +20,23 @@ type Server struct {
 	router     RouterInterface
 	listenPort int
 	srv        *http.Server
+	log        logger.LoggerInterface
+	collector  proadapt.ResticCollectorInterface
 }
 
-func GetServer(port int, router RouterInterface) *Server {
+func GetServer(port int,
+	router RouterInterface,
+	log logger.LoggerInterface,
+	collector proadapt.ResticCollectorInterface) *Server {
+
 	ctx := context.Background()
 
 	return &Server{
 		ctx:        ctx,
 		listenPort: port,
 		router:     router,
+		log:        log,
+		collector:  collector,
 	}
 }
 
@@ -36,11 +45,9 @@ func (s *Server) Serve() {
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
-	//s.router.HandleFunc("/metrics", s.metricsHandler)
-
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(
-		proadapt.NewResticCollector(),
+		s.collector,
 	)
 
 	s.router.Handle("/metrics", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +98,7 @@ func (s *Server) Serve() {
 func (s *Server) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(
-		proadapt.NewResticCollector(),
+		s.collector,
 	)
 
 	promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg})
