@@ -5,6 +5,7 @@ import (
 	"restic-exporter/internal/application"
 	"restic-exporter/internal/application/cqrs"
 	"restic-exporter/internal/application/prometheus/queries"
+	"restic-exporter/internal/application/restic/commands"
 	"restic-exporter/internal/application/storage"
 )
 
@@ -42,6 +43,11 @@ var ApplicationServices = []di.Def{
 				FileStorage: fs,
 			}
 			dispatcher.RegisterQuery("GetRepoStatistic", getRepoStatisticHandler)
+
+			setPasswordCmdHandler := commands.SetPasswordCmdCommandHandler{
+				FileStorage: fs,
+			}
+			dispatcher.RegisterCommand("SetPasswordCmd", setPasswordCmdHandler)
 
 			return dispatcher, nil
 		},

@@ -10,4 +10,5 @@ type FilesystemInterface interface {
 	GetSnapshots(repo restic.Repo) ([]restic.Snapshot, error)
 	GetLatestSnapshotInfo(repo restic.Repo) (restic.Snapshot, error)
 	GetRepoStatistic(repo restic.Repo) (restic.Repo, error)
+	FindAccessFiles(ctx context.Context, rootDir string) ([]restic.RepoAccess, error)
 }

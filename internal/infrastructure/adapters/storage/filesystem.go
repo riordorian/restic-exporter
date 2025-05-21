@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -46,6 +47,61 @@ func (f *Filesystem) FindAllRepos(ctx context.Context, rootDir string) (restic.R
 	})
 
 	return repos, err
+}
+
+func (f *Filesystem) FindAccessFiles(ctx context.Context, rootDir string) ([]restic.RepoAccess, error) {
+
+	accessFiles := make([]restic.RepoAccess, 0)
+	root := "."
+
+	if rootDir != "" {
+		root = rootDir
+	}
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		repoPath, repoPassword := "", ""
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		fileName := filepath.Base(path)
+		if !strings.Contains(fileName, "access") {
+			return nil
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+
+			if strings.HasPrefix(line, "export RESTIC_REPOSITORY=") {
+				repoPath = strings.TrimPrefix(line, "export RESTIC_REPOSITORY=")
+			}
+
+			if strings.HasPrefix(line, "export RESTIC_PASSWORD=") {
+				repoPassword = strings.TrimPrefix(line, "export RESTIC_PASSWORD=")
+				repoPassword = strings.Trim(repoPassword, `"'`)
+			}
+		}
+
+		if repoPath != "" && repoPassword != "" {
+			accessFile := restic.RepoAccess{Path: repoPath, Password: repoPassword}
+			accessFiles = append(accessFiles, accessFile)
+		}
+
+		return nil
+	})
+
+	return accessFiles, err
 }
 
 func (f *Filesystem) GetSnapshots(repo restic.Repo) ([]restic.Snapshot, error) {
