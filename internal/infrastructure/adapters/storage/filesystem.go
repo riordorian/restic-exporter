@@ -160,9 +160,8 @@ func (f *Filesystem) isResticRepo(path string) bool {
 
 func (f *Filesystem) GetLatestSnapshotInfo(repo restic.Repo) (restic.Snapshot, error) {
 	snapshot := restic.Snapshot{}
-	cmd := exec.Command("restic", "-r", repo.Path, "snapshots", "latest", "--json", "--no-lock")
-	// TODO: need dynamic password
-	cmd.Env = append(os.Environ(), "RESTIC_PASSWORD=1")
+	cmd := exec.Command("restic", "-r", repo.Path, "--password-file", "./.restic-password", "snapshots", "latest", "--json", "--no-lock")
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return restic.Snapshot{}, fmt.Errorf("restic failed: %v\nOutput: %s", err, string(output))
@@ -191,9 +190,8 @@ func (f *Filesystem) GetLatestSnapshotInfo(repo restic.Repo) (restic.Snapshot, e
 		return snapshot, err
 	}
 
-	cmd = exec.Command("restic", "-r", repo.Path, "stats", "--json", "--no-lock", "latest")
-	// TODO: need dynamic password
-	cmd.Env = append(os.Environ(), "RESTIC_PASSWORD=1")
+	cmd = exec.Command("restic", "-r", repo.Path, "--password-file", "./.restic-password", "stats", "--json", "--no-lock", "latest")
+
 	output, err = cmd.CombinedOutput()
 	if err != nil {
 		return restic.Snapshot{}, fmt.Errorf("restic failed: %v\nOutput: %s", err, string(output))
@@ -221,9 +219,8 @@ func (f *Filesystem) GetLatestSnapshotInfo(repo restic.Repo) (restic.Snapshot, e
 }
 
 func (f *Filesystem) GetRepoStatistic(repo restic.Repo) (restic.Repo, error) {
-	cmd := exec.Command("restic", "-r", repo.Path, "stats", "--json", "--no-lock")
-	// TODO: need dynamic password
-	cmd.Env = append(os.Environ(), "RESTIC_PASSWORD=1")
+	cmd := exec.Command("restic", "-r", repo.Path, "--password-file", "./.restic-password", "stats", "--json", "--no-lock")
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return restic.Repo{}, fmt.Errorf("restic failed: %v\nOutput: %s", err, string(output))

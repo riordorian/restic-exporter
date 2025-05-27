@@ -4,6 +4,7 @@ import (
 	"github.com/sarulabs/di"
 	"restic-exporter/internal/application"
 	"restic-exporter/internal/application/cqrs"
+	logger "restic-exporter/internal/application/log"
 	"restic-exporter/internal/application/prometheus/queries"
 	"restic-exporter/internal/application/restic/commands"
 	"restic-exporter/internal/application/storage"
@@ -26,6 +27,7 @@ var ApplicationServices = []di.Def{
 		Scope: di.App,
 		Build: func(ctn di.Container) (interface{}, error) {
 			fs := ctn.Get("FilesystemStorage").(storage.FilesystemInterface)
+			logger := ctn.Get("LoggerService").(logger.LoggerInterface)
 
 			dispatcher := cqrs.NewDispatcher()
 
@@ -46,6 +48,7 @@ var ApplicationServices = []di.Def{
 
 			setPasswordCmdHandler := commands.SetPasswordCmdCommandHandler{
 				FileStorage: fs,
+				Logger:      logger,
 			}
 			dispatcher.RegisterCommand("SetPasswordCmd", setPasswordCmdHandler)
 
