@@ -1,36 +1,43 @@
-# Project info
-This is a pet golang project. 
-GRPC server on golang using clean architecture.
+# Restic Exporter
 
-## Components
+Restic Exporter is a tool for monitoring Restic repositories with Prometheus. Key features:
+•	Collects statistics from Restic repositories (size, number of snapshots, etc.)
+•	Exports metrics in Prometheus format
+•	Manages repository passwords via CLI (in-progress)
+•	Provides an HTTP API for accessing metrics
+
+
+
+## Usage
+### Run exporter
+```
+./restic-exporter serve
+```
+This command run http server on with /metrics endpoint.
+Listened port set in .env file. 8085 by default.
+This endpoint provide prometheus formated metrics of all restic repos that located in base path (Set it in .env file)
+
+
+Set password from files for all repos
+```
+./restic-exporter set-password-cmd <directory> <new-password>
+```
+#### Arguments:
+ - directory     Path to directory containing access files (*.access.*)
+ - new-password  New password to set for all repositories
+
+
+### Components
 | Component       |                    Vendor                    |
 |-----------------|:--------------------------------------------:|
-| Database        |                  PostgreSQL                  |
-| DB driver       |                     Sqlx                     |
 | Config provider |   [Viper](https://github.com/spf13/viper)    |
 | DI Container    |  [Sarulabs](https://github.com/sarulabs/di)  |
 | Logger          |    [Zap](https://github.com/uber-go/zap)     |
 | Mocks           | [Mockery](https://github.com/vektra/mockery) |
- | CLI commands    |   [Cobra](https://github.com/spf13/cobra)    |
-| File storage    |   [Minio](https://min.io)    |
+| CLI commands    |   [Cobra](https://github.com/spf13/cobra)    |
+| Http routing    |   [Mux](github.com/gorilla/mux)    |
 
 
-## Migrations
-#### Installation
-https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
-
-#### Usage
-https://dev.to/techschoolguru/how-to-write-run-database-migration-in-golang-5h6g
-
-###### Migration create example
-```
-migrate create -ext sql -dir ./ -seq *MIGRATION_NAME*
-```    
-
-###### Migration up example
-```
-migrate -path ./ -database "postgresql://grpc:password@localhost:5432/grpc?sslmode=disable" -verbose up
-```    
 
 ## Testing
 
@@ -60,25 +67,3 @@ ghz --insecure --proto internal/infrastructure/ports/grpc/proto/new.proto --call
 mockery --all
 ```
 Generate mock structures in pkg dir 
-
-
-## API GW
-Krakend used as api gw.
-
-Command example for compiling pb file for krakend
-```
-protoc -I=internal/infrastructure/ports/grpc/proto --descriptor_set_out=new.pb --include_imports internal/infrastructure/ports/grpc/proto/*.proto
-```
-
-
-## Frontend
-
-Code generating for grpc client (In backend root dir)
-
-```
-protoc $(find ./internal/infrastructure/ports/grpc/proto -iname "*.proto") \
- 			--proto_path=./internal/infrastructure/ports/grpc/proto \
-			--plugin=protoc-gen-grpc-web=./frontend/node_modules/.bin/protoc-gen-grpc-web \
-			--js_out=import_style=commonjs:./frontend/src/proto \
-			--grpc-web_out=import_style=commonjs,mode=grpcwebtext:./frontend/src/proto
-```

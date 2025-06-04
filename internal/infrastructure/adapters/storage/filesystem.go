@@ -31,14 +31,23 @@ func (f *Filesystem) FindAllRepos(ctx context.Context, rootDir string) (restic.R
 	if rootDir != "" {
 		root = rootDir
 	}
-
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 
 			return err
 		}
 		if info.IsDir() && f.isResticRepo(path) {
-			repo := restic.Repo{Path: path, Name: path}
+			repoPath := strings.Split(filepath.Clean(path), string(filepath.Separator))
+			n := len(repoPath)
+			repoName := path
+			if 2 == n {
+				repoName = filepath.Join(repoPath[0], repoPath[1])
+			}
+			if n > 2 {
+				repoName = filepath.Join(repoPath[n-1], repoPath[n-2])
+			}
+
+			repo := restic.Repo{Path: path, Name: repoName}
 			repos[path] = repo
 			return filepath.SkipDir
 		}
@@ -125,18 +134,23 @@ func NewFilesystem() *Filesystem {
 }
 
 func (f *Filesystem) isResticRepo(path string) bool {
+	f.log.Info(path)
 	required := []string{"config", "data", "index", "keys", "snapshots"}
 	for _, file := range required {
 		if _, err := os.Stat(filepath.Join(path, file)); os.IsNotExist(err) {
+			f.log.Info(err.Error())
+
 			return false
 		}
 	}
 
-	cmd := exec.Command("restic", "-r", path, "stats", "--json", "--no-lock")
-	cmd.Env = append(os.Environ(), "RESTIC_PASSWORD=1")
+	return true
+
+	/*cmd := exec.Command("restic", "-r", path, "stats", "--password-file", "./.restic-password", "--json", "--no-lock")
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
+		f.log.Info(cmd.String())
 		f.log.Error(err.Error())
 	}
 
@@ -144,6 +158,8 @@ func (f *Filesystem) isResticRepo(path string) bool {
 
 	err = json.Unmarshal([]byte(output), &snapshot)
 	if err != nil {
+		f.log.Info(cmd.String())
+		f.log.Error(string(output))
 		f.log.Error("JSON decode error:", err)
 		return false
 	}
@@ -153,7 +169,7 @@ func (f *Filesystem) isResticRepo(path string) bool {
 		return true
 	} else {
 		return false
-	}
+	}*/
 }
 
 // TODO: Need Refactor. Get snapshot info by snapshot id

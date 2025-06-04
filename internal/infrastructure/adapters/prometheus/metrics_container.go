@@ -88,3 +88,15 @@ func (mc *MetricsContainer[T]) Get(name string) (T, bool) {
 	metric, exists := mc.metrics[name]
 	return metric, exists
 }
+
+func (mcf *MetricsContainerFactory[T]) NewMetric(name, help string, labels []string) *prometheus.GaugeVec {
+	metric := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: name,
+			Help: help,
+		},
+		labels,
+	)
+	prometheus.MustRegister(metric)
+	return metric
+}
