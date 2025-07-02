@@ -37,33 +37,3 @@ Set password from files for all repos
 | CLI commands    |   [Cobra](https://github.com/spf13/cobra)    |
 | Http routing    |   [Mux](github.com/gorilla/mux)    |
 
-
-
-## Testing
-
-### Test coverage
-
-Run 
-```
-go test ./... -coverprofile cover.out
-```
-to collect coverage statistics.
-
-Run
-```
-go tool cover -html=cover.out
-```
-to build ui statistic page
-
- 
-### Performance testing
-You can run concurrent calls of grpc method by using [ghz utility](https://ghz.sh/docs/examples).   
-```
-ghz --insecure --proto internal/infrastructure/ports/grpc/proto/new.proto --call grpc.News.List -d '{"Author": {"Id": "44266dc6-18d0-46bd-a2b5-238de53db2cb"}, "Page": 1, "Query": "", "Sort": "ASC", "Status": "ACTIVE"}' -n 2000 -c 20 --connections=10 --debug ./debug.json   0.0.0.0:50051
-```
-
-### Mocks generation
-```
-mockery --all
-```
-Generate mock structures in pkg dir 
